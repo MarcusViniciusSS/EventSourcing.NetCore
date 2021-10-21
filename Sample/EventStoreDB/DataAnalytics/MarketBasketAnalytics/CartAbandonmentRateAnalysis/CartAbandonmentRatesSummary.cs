@@ -32,7 +32,7 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
         decimal AbandonedAverageAmount
     )
     {
-        public async Task<CartAbandonmentRatesSummaryCalculated> Handle(
+        public static async Task<CartAbandonmentRatesSummaryCalculated> Handle(
             Func<CancellationToken, Task<CartAbandonmentRatesSummaryCalculated>> getCurrentSummary,
             CartAbandonmentRateCalculated @event,
             CancellationToken ct
@@ -70,7 +70,7 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
             );
         }
 
-        public async Task<CartAbandonmentRatesSummaryCalculated> Handle(
+        public static async Task<CartAbandonmentRatesSummaryCalculated> Handle(
             Func<CancellationToken, Task<CartAbandonmentRatesSummaryCalculated>> getCurrentSummary,
             ShoppingCartConfirmed @event,
             CancellationToken ct
