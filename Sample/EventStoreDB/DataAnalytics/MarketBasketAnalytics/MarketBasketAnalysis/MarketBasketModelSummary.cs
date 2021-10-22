@@ -13,7 +13,8 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
 
     public record MarketBasketModelSummaryCalculated(
         Guid ProductId,
-        IReadOnlyList<ProductRelationshipsInBaskets> Relationships
+        IReadOnlyList<ProductRelationshipsInBaskets> Relationships,
+        int BasketsCount
     )
     {
         public static async Task<MarketBasketModelSummaryCalculated> Handle(
@@ -52,7 +53,11 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
                     ).ToList()
             );
 
-            return currentSummary with { Relationships = result };
+            return currentSummary with
+            {
+                Relationships = result,
+                BasketsCount = currentSummary.BasketsCount + 1
+            };
         }
 
         private static IReadOnlyList<IReadOnlyList<Guid>> Expand(IReadOnlyList<Guid> relatedProducts)
