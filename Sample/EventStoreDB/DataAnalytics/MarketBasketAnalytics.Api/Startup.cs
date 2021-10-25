@@ -1,4 +1,5 @@
-﻿using DataAnalytics.Core.Subscriptions;
+﻿using DataAnalytics.Core;
+using DataAnalytics.Core.Subscriptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -26,8 +27,8 @@ namespace MarketBasketAnalytics.Api
                 {
                     c.SwaggerDoc("v1", new OpenApiInfo { Title = "ECommerce.Api", Version = "v1" });
                 })
-                // .AddCoreServices(Configuration)
-                // .AddECommerceModule()
+                .AddCoreServices(Configuration)
+                .AddMarketBasketAnalytics()
                 .AddSubscriptionToAll();
         }
 
@@ -52,7 +53,7 @@ namespace MarketBasketAnalytics.Api
 
             // if (env.IsDevelopment())
             // {
-            //     app.ApplicationServices.UseECommerceModule();
+            //     app.ApplicationServices.UseMarketBasketAnalytics();
             // }
         }
     }

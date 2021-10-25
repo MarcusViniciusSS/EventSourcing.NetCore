@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using EventStore.Client;
@@ -18,28 +17,28 @@ namespace DataAnalytics.Core.Events
     {
         private readonly IServiceProvider serviceProvider;
         private readonly AsyncRetryPolicy retryPolicy;
-        private readonly IEnumerable<Func<ResolvedEvent, CancellationToken, Task>> eventHandlers;
 
         public EventBus(
             IServiceProvider serviceProvider,
-            AsyncRetryPolicy retryPolicy,
-            IEnumerable<Func<ResolvedEvent, CancellationToken, Task>> eventHandlers
+            AsyncRetryPolicy retryPolicy
         )
         {
             this.serviceProvider = serviceProvider;
             this.retryPolicy = retryPolicy;
-            this.eventHandlers = eventHandlers;
         }
 
         public async Task Publish(ResolvedEvent @event, CancellationToken ct)
         {
             using var scope = serviceProvider.CreateScope();
 
+            var eventHandlers = scope.ServiceProvider
+                .GetServices<Func<IServiceProvider, ResolvedEvent, CancellationToken, Task>>();
+
             foreach (var handle in eventHandlers)
             {
                 await retryPolicy.ExecuteAsync(async token =>
                 {
-                    await handle(@event, token);
+                    await handle(scope.ServiceProvider, @event, token);
                 }, ct);
             }
         }
@@ -51,8 +50,7 @@ namespace DataAnalytics.Core.Events
             services.AddSingleton<IEventBus, EventBus>(sp =>
                 new EventBus(
                     sp,
-                    Policy.Handle<Exception>().RetryAsync(3),
-                    sp.GetServices<Func<ResolvedEvent, CancellationToken, Task>>()
+                    Policy.Handle<Exception>().RetryAsync(3)
                 )
             );
     }

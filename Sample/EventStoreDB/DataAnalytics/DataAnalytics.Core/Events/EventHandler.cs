@@ -13,15 +13,23 @@ namespace DataAnalytics.Core.Events
             this IServiceCollection services,
             Func<ResolvedEvent, CancellationToken, Task> handler,
             string? eventType = null
+        ) =>
+            services.AddEventHandler(
+                (_, resolvedEvent, ct) => handler(resolvedEvent, ct), eventType);
+
+        public static IServiceCollection AddEventHandler(
+            this IServiceCollection services,
+            Func<IServiceProvider, ResolvedEvent, CancellationToken, Task> handler,
+            string? eventType = null
         )
         {
-            services.AddScoped<Func<ResolvedEvent, CancellationToken, Task>>(
-                _ => (resolvedEvent, ct) =>
+            services.AddScoped<Func<IServiceProvider, ResolvedEvent, CancellationToken, Task>>(
+                _ => (sp, resolvedEvent, ct) =>
                 {
                     if (eventType != null && resolvedEvent.Event.EventType != eventType)
                         return Task.CompletedTask;
 
-                    return handler(@resolvedEvent, ct);
+                    return handler(sp, resolvedEvent, ct);
                 }
             );
 
@@ -31,19 +39,26 @@ namespace DataAnalytics.Core.Events
         public static IServiceCollection AddEventHandler<TEvent>(
             this IServiceCollection services,
             Func<TEvent, CancellationToken, Task> handler
+        ) =>
+            services.AddEventHandler<TEvent>(
+                (_, @event, ct) => handler(@event, ct));
+
+        public static IServiceCollection AddEventHandler<TEvent>(
+            this IServiceCollection services,
+            Func<IServiceProvider, TEvent, CancellationToken, Task> handler
         )
         {
             var eventType = EventTypeMapper.ToName<TEvent>();
 
-            services.AddScoped<Func<ResolvedEvent, CancellationToken, Task>>(
-                _ => (resolvedEvent, ct) =>
+            services.AddScoped<Func<IServiceProvider, ResolvedEvent, CancellationToken, Task>>(
+                _ => (sp, resolvedEvent, ct) =>
                 {
                     if (resolvedEvent.Event.EventType != eventType)
                         return Task.CompletedTask;
 
                     var @event = resolvedEvent.DeserializeData<TEvent>();
 
-                    return handler(@event, ct);
+                    return handler(sp, @event, ct);
                 }
             );
 
@@ -53,12 +68,19 @@ namespace DataAnalytics.Core.Events
         public static IServiceCollection AddEventHandler<TEvent, TEventMetadata>(
             this IServiceCollection services,
             Func<TEvent, TEventMetadata, CancellationToken, Task> handler
+        ) =>
+            services.AddEventHandler<TEvent, TEventMetadata>(
+                (_, @event, metadata, ct) => handler(@event, metadata, ct));
+
+        public static IServiceCollection AddEventHandler<TEvent, TEventMetadata>(
+            this IServiceCollection services,
+            Func<IServiceProvider, TEvent, TEventMetadata, CancellationToken, Task> handler
         )
         {
             var eventType = EventTypeMapper.ToName<TEvent>();
 
-            services.AddScoped<Func<ResolvedEvent, CancellationToken, Task>>(
-                _ => (resolvedEvent, ct) =>
+            services.AddScoped<Func<IServiceProvider, ResolvedEvent, CancellationToken, Task>>(
+                _ => (sp, resolvedEvent, ct) =>
                 {
                     if (resolvedEvent.Event.EventType != eventType)
                         return Task.CompletedTask;
@@ -66,7 +88,7 @@ namespace DataAnalytics.Core.Events
                     var @event = resolvedEvent.DeserializeData<TEvent>();
                     var metadata = resolvedEvent.DeserializeMetadata<TEventMetadata>();
 
-                    return handler(@event, metadata, ct);
+                    return handler(sp, @event, metadata, ct);
                 }
             );
 

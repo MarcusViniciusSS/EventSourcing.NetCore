@@ -28,4 +28,9 @@ namespace MarketBasketAnalytics.Carts
         Guid ShoppingCartId,
         DateTime AbandonedAt
     );
+
+    public static class ShoppingCart
+    { public static string ToStreamId(Guid shoppingCartId) =>
+            $"shopping_cart-{shoppingCartId}";
+    }
 }

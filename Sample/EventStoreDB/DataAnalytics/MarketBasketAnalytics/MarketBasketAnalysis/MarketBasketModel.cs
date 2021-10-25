@@ -11,7 +11,9 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
     public record CartProductItemsMatched(
         Guid ProductId,
         IReadOnlyList<Guid> RelatedProducts
-    )
+    );
+
+    public static class MarketBasketModel
     {
         public record ShoppingCard(
             IDictionary<Guid, int> ProductItems

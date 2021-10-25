@@ -15,7 +15,9 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
         Guid ProductId,
         IReadOnlyList<ProductRelationshipsInBaskets> Relationships,
         int BasketsCount
-    )
+    );
+
+    public static class MarketBasketModelSummary
     {
         public static async Task<MarketBasketModelSummaryCalculated> Handle(
             Func<Guid, CancellationToken, Task<MarketBasketModelSummaryCalculated>> getCurrentSummary,
@@ -53,11 +55,7 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
                     ).ToList()
             );
 
-            return currentSummary with
-            {
-                Relationships = result,
-                BasketsCount = currentSummary.BasketsCount + 1
-            };
+            return currentSummary with { Relationships = result, BasketsCount = currentSummary.BasketsCount + 1 };
         }
 
         private static IReadOnlyList<IReadOnlyList<Guid>> Expand(IReadOnlyList<Guid> relatedProducts)

@@ -32,13 +32,20 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
         decimal AbandonedAverageAmount
     )
     {
+        public static CartAbandonmentRatesSummaryCalculated Default() =>
+            new(default, default, default, default, default, default, default, default, default, default);
+    }
+
+    public static class CartAbandonmentRatesSummary
+    {
         public static async Task<CartAbandonmentRatesSummaryCalculated> Handle(
-            Func<CancellationToken, Task<CartAbandonmentRatesSummaryCalculated>> getCurrentSummary,
+            Func<CancellationToken, Task<CartAbandonmentRatesSummaryCalculated?>> getCurrentSummary,
             CartAbandonmentRateCalculated @event,
             CancellationToken ct
         )
         {
-            var currentSummary = await getCurrentSummary(ct);
+            var currentSummary = await getCurrentSummary(ct)
+                                 ?? CartAbandonmentRatesSummaryCalculated.Default();
 
             var totalCount = currentSummary.TotalCount + 1;
             var abandonedCount = currentSummary.AbandonedCount + 1;
@@ -71,12 +78,13 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
         }
 
         public static async Task<CartAbandonmentRatesSummaryCalculated> Handle(
-            Func<CancellationToken, Task<CartAbandonmentRatesSummaryCalculated>> getCurrentSummary,
+            Func<CancellationToken, Task<CartAbandonmentRatesSummaryCalculated?>> getCurrentSummary,
             ShoppingCartConfirmed @event,
             CancellationToken ct
         )
         {
-            var currentSummary = await getCurrentSummary(ct);
+            var currentSummary = await getCurrentSummary(ct)
+                                 ?? CartAbandonmentRatesSummaryCalculated.Default();
 
             var totalCount = currentSummary.TotalCount + 1;
 
@@ -87,5 +95,7 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
                 AbandonmentRate = currentSummary.AbandonedCount / (decimal)totalCount,
             };
         }
+
+        public const string StreamId = "cart_abandonment_rates-summary";
     }
 }

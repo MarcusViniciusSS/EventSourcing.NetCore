@@ -14,14 +14,17 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
         DateTime InitializedAt,
         DateTime AbandonedAt,
         TimeSpan TotalTime
-    )
+    );
+
+    public class CartAbandonmentRate
     {
-        public Task<CartAbandonmentRateCalculated> Handle(
-            Func<Func<CartAbandonmentRateCalculated?, object, CartAbandonmentRateCalculated>, Guid, CancellationToken, Task<CartAbandonmentRateCalculated>> aggregate,
+        public static Task<CartAbandonmentRateCalculated> Handle(
+            Func<Func<CartAbandonmentRateCalculated?, object, CartAbandonmentRateCalculated>, string, CancellationToken,
+                Task<CartAbandonmentRateCalculated?>> aggregate,
             ShoppingCartAbandoned @event,
             CancellationToken ct
         ) =>
-            aggregate(When, @event.ShoppingCartId, ct);
+            aggregate(When, ShoppingCart.ToStreamId(@event.ShoppingCartId), ct)!;
 
         public static CartAbandonmentRateCalculated When(CartAbandonmentRateCalculated? entity, object @event) =>
             @event switch
@@ -44,12 +47,11 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
                     },
 
                 ShoppingCartAbandoned (_, var abandonedAt) =>
-                    entity! with
-                    {
-                        AbandonedAt = abandonedAt,
-                        TotalTime = abandonedAt - entity.InitializedAt
-                    },
+                    entity! with { AbandonedAt = abandonedAt, TotalTime = abandonedAt - entity.InitializedAt },
                 _ => entity!
             };
+
+        public static string ToStreamId(Guid shoppingCartId) =>
+            $"cart_abandonment_rate-{shoppingCartId}";
     }
 }

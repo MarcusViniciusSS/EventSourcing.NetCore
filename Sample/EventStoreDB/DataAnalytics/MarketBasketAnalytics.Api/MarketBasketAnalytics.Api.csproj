@@ -16,6 +16,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\DataAnalytics.Core\DataAnalytics.Core.csproj" />
+        <ProjectReference Include="..\MarketBasketAnalytics\MarketBasketAnalytics.csproj" />
     </ItemGroup>
 
 </Project>
