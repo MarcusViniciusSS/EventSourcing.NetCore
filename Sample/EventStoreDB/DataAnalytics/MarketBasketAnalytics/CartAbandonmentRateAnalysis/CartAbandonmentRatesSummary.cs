@@ -19,7 +19,7 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
     /// <param name="AbandonedProductItemsAverageCount"></param>
     /// <param name="AbandonedTotalAmount"></param>
     /// <param name="AbandonedAverageAmount"></param>
-    public record CartAbandonmentRatesSummaryCalculated(
+    public record CartAbandonmentRatesSummary(
         int TotalCount,
         int ConfirmedCount,
         int AbandonedCount,
@@ -32,20 +32,16 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
         decimal AbandonedAverageAmount
     )
     {
-        public static CartAbandonmentRatesSummaryCalculated Default() =>
+        public static CartAbandonmentRatesSummary Default() =>
             new(default, default, default, default, default, default, default, default, default, default);
-    }
 
-    public static class CartAbandonmentRatesSummary
-    {
-        public static async Task<CartAbandonmentRatesSummaryCalculated> Handle(
-            Func<CancellationToken, Task<CartAbandonmentRatesSummaryCalculated?>> getCurrentSummary,
+        public static async Task<CartAbandonmentRatesSummary> Handle(
+            Func<CancellationToken, Task<CartAbandonmentRatesSummary?>> getCurrentSummary,
             CartAbandonmentRateCalculated @event,
             CancellationToken ct
         )
         {
-            var currentSummary = await getCurrentSummary(ct)
-                                 ?? CartAbandonmentRatesSummaryCalculated.Default();
+            var currentSummary = await getCurrentSummary(ct) ?? Default();
 
             var totalCount = currentSummary.TotalCount + 1;
             var abandonedCount = currentSummary.AbandonedCount + 1;
@@ -63,7 +59,7 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
             var abandonedAverageAmount =
                 abandonedTotalAmount / abandonedCount;
 
-            return new CartAbandonmentRatesSummaryCalculated(
+            return new CartAbandonmentRatesSummary(
                 totalCount,
                 currentSummary.ConfirmedCount,
                 abandonedCount,
@@ -77,14 +73,13 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
             );
         }
 
-        public static async Task<CartAbandonmentRatesSummaryCalculated> Handle(
-            Func<CancellationToken, Task<CartAbandonmentRatesSummaryCalculated?>> getCurrentSummary,
+        public static async Task<CartAbandonmentRatesSummary> Handle(
+            Func<CancellationToken, Task<CartAbandonmentRatesSummary?>> getCurrentSummary,
             ShoppingCartConfirmed @event,
             CancellationToken ct
         )
         {
-            var currentSummary = await getCurrentSummary(ct)
-                                 ?? CartAbandonmentRatesSummaryCalculated.Default();
+            var currentSummary = await getCurrentSummary(ct) ?? Default();
 
             var totalCount = currentSummary.TotalCount + 1;
 

@@ -36,7 +36,7 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
                     var streamId = CartAbandonmentRatesSummary.StreamId;
 
                     var @event = await CartAbandonmentRatesSummary.Handle(
-                        token => eventStore.ReadLastEvent<CartAbandonmentRatesSummaryCalculated>(streamId, token),
+                        token => eventStore.ReadLastEvent<CartAbandonmentRatesSummary>(streamId, token),
                         shoppingCartAbandoned,
                         ct
                     );
@@ -54,7 +54,7 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
                     var streamId = CartAbandonmentRatesSummary.StreamId;
 
                     var @event = await CartAbandonmentRatesSummary.Handle(
-                        token => eventStore.ReadLastEvent<CartAbandonmentRatesSummaryCalculated>(streamId, token),
+                        token => eventStore.ReadLastEvent<CartAbandonmentRatesSummary>(streamId, token),
                         shoppingCartConfirmed,
                         ct
                     );
