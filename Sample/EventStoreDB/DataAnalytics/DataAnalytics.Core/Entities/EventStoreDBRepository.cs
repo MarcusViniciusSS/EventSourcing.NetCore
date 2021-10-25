@@ -136,5 +136,20 @@ namespace DataAnalytics.Core.Entities
                 cancellationToken: cancellationToken
             );
         }
+
+        public static async Task Append(
+            this EventStoreClient eventStore,
+            string id,
+            object @event,
+            CancellationToken cancellationToken
+        )
+        {
+            await eventStore.AppendToStreamAsync(
+                id,
+                StreamState.Any,
+                new[] { @event.ToJsonEventData() },
+                cancellationToken: cancellationToken
+            );
+        }
     }
 }

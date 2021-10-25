@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Linq;
+using DataAnalytics.Core.Entities;
 using DataAnalytics.Core.Events;
+using DataAnalytics.Core.Serialisation;
+using EventStore.Client;
+using MarketBasketAnalytics.CartAbandonmentRateAnalysis;
 using MarketBasketAnalytics.Carts;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,13 +14,38 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
     {
         public static IServiceCollection AddMarketBasketAnalysis(this IServiceCollection services) =>
             services
-                .AddEventHandler<ShoppingCartConfirmed>((@event, ct) =>
+                .AddEventHandler<ShoppingCartConfirmed>(async (sp, shoppingCartConfirmed, ct) =>
                 {
-                    throw new NotImplementedException();
+                    var eventStore = sp.GetRequiredService<EventStoreClient>();
+
+                    var events = await CartProductItemsMatching.Handle(
+                        eventStore.AggregateStream,
+                        shoppingCartConfirmed,
+                        ct
+                    );
+
+                    await eventStore.AppendToStreamAsync(
+                        CartProductItemsMatching.ToStreamId(shoppingCartConfirmed.ShoppingCartId),
+                        StreamState.NoStream,
+                        events.Select(@event => @event.ToJsonEventData()),
+                        cancellationToken: ct
+                    );
                 })
-                .AddEventHandler<CartProductItemsMatched>((@event, ct) =>
+                .AddEventHandler<CartProductItemsMatched>(async (sp, cartProductItemsMatched, ct) =>
                 {
-                    throw new NotImplementedException();
+                    var eventStore = sp.GetRequiredService<EventStoreClient>();
+
+                    var @event = await ProductRelationships.Handle(
+                        (id, token) => eventStore.ReadLastEvent<ProductRelationshipsCalculated>(id, token),
+                        cartProductItemsMatched,
+                        ct
+                    );
+
+                    await eventStore.AppendToStreamWithSingleEvent(
+                        ProductRelationships.ToStreamId(cartProductItemsMatched.ProductId),
+                        @event,
+                        ct
+                    );
                 });
     }
 }

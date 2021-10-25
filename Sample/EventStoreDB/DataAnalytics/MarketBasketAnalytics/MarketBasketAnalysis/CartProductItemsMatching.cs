@@ -13,19 +13,26 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
         IReadOnlyList<Guid> RelatedProducts
     );
 
-    public static class MarketBasketModel
+    public static class CartProductItemsMatching
     {
-        public record ShoppingCard(
+        public record ShoppingCart(
             IDictionary<Guid, int> ProductItems
-        );
+        )
+        {
+            public static ShoppingCart Default() => new (new Dictionary<Guid, int>());
+        }
 
         public static async Task<IReadOnlyList<CartProductItemsMatched>> Handle(
-            Func<Func<ShoppingCard?, object, ShoppingCard>, Guid, CancellationToken, Task<ShoppingCard>> aggregate,
+            Func<Func<ShoppingCart?, object, ShoppingCart>, string, CancellationToken, Task<ShoppingCart?>> aggregate,
             ShoppingCartConfirmed @event,
             CancellationToken ct
         )
         {
-            var shoppingCard = await aggregate(When, @event.ShoppingCartId, ct);
+            var shoppingCard = await aggregate(
+                When,
+                MarketBasketAnalytics.Carts.ShoppingCart.ToStreamId(@event.ShoppingCartId),
+                ct
+            ) ?? ShoppingCart.Default();
 
             var productIds = shoppingCard.ProductItems.Keys;
 
@@ -39,11 +46,11 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
                 .ToList();
         }
 
-        public static ShoppingCard When(ShoppingCard? entity, object @event) =>
+        public static ShoppingCart When(ShoppingCart? entity, object @event) =>
             @event switch
             {
                 ShoppingCartInitialized =>
-                    new ShoppingCard(new Dictionary<Guid, int>()),
+                    new ShoppingCart(new Dictionary<Guid, int>()),
 
                 ProductItemAddedToShoppingCart (_, var productItem) =>
                     entity! with
@@ -96,5 +103,8 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
 
             return result;
         }
+
+        public static string ToStreamId(Guid shoppingCartId) =>
+            $"cart_product_items_matching-{shoppingCartId}";
     }
 }

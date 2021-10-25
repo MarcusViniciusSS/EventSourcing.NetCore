@@ -11,23 +11,29 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
         int BasketWithProductsCount
     );
 
-    public record MarketBasketModelSummaryCalculated(
+    public record ProductRelationshipsCalculated(
         Guid ProductId,
         IReadOnlyList<ProductRelationshipsInBaskets> Relationships,
         int BasketsCount
-    );
-
-    public static class MarketBasketModelSummary
+    )
     {
-        public static async Task<MarketBasketModelSummaryCalculated> Handle(
-            Func<Guid, CancellationToken, Task<MarketBasketModelSummaryCalculated>> getCurrentSummary,
+        public static ProductRelationshipsCalculated Default() =>
+            new(default, Array.Empty<ProductRelationshipsInBaskets>(), default);
+    }
+
+    public static class ProductRelationships
+    {
+        public static async Task<ProductRelationshipsCalculated> Handle(
+            Func<string, CancellationToken, Task<ProductRelationshipsCalculated?>> getCurrentSummary,
             CartProductItemsMatched @event,
             CancellationToken ct
         )
         {
             var result = new List<ProductRelationshipsInBaskets>();
 
-            var currentSummary = await getCurrentSummary(@event.ProductId, ct);
+            var currentSummary = await getCurrentSummary(ToStreamId(@event.ProductId), ct)
+                ?? ProductRelationshipsCalculated.Default();
+            
             var relatedProducts = Expand(@event.RelatedProducts).ToList();
 
             foreach (var currentRel in currentSummary.Relationships)
@@ -84,5 +90,8 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
                     .ToList()
             );
         }
+
+        public static string ToStreamId(Guid shoppingCartId) =>
+            $"cart_product_items_matching-{shoppingCartId}";
     }
 }

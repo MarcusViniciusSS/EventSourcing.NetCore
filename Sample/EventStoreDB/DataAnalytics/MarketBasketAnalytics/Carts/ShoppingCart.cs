@@ -30,7 +30,8 @@ namespace MarketBasketAnalytics.Carts
     );
 
     public static class ShoppingCart
-    { public static string ToStreamId(Guid shoppingCartId) =>
+    {
+        public static string ToStreamId(Guid shoppingCartId) =>
             $"shopping_cart-{shoppingCartId}";
     }
 }
