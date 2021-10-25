@@ -19,7 +19,7 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
 
         public static async Task<IReadOnlyList<CartProductItemsMatched>> Handle(
             Func<Func<ShoppingCard?, object, ShoppingCard>, Guid, CancellationToken, Task<ShoppingCard>> aggregate,
-            ShoppingCartAbandoned @event,
+            ShoppingCartConfirmed @event,
             CancellationToken ct
         )
         {

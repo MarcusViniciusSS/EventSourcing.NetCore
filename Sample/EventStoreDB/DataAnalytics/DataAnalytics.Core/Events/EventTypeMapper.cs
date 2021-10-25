@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Linq;
 
-namespace ECommerce.Core.Events
+namespace DataAnalytics.Core.Events
 {
     public class EventTypeMapper
     {

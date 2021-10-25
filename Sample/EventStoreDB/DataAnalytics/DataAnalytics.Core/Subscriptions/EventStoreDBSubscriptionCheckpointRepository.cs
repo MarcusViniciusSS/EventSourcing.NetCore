@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using DataAnalytics.Core.Serialisation;
 using EventStore.Client;
 
-namespace ECommerce.Core.Subscriptions
+namespace DataAnalytics.Core.Subscriptions
 {
     public record CheckpointStored(
         string SubscriptionId,
@@ -37,7 +37,7 @@ namespace ECommerce.Core.Subscriptions
 
             ResolvedEvent? @event = await result.FirstOrDefaultAsync(ct);
 
-            return @event?.Deserialize<CheckpointStored>().Position;
+            return @event?.DeserializeData<CheckpointStored>().Position;
         }
 
         public async ValueTask Store(string subscriptionId, ulong position, CancellationToken ct)

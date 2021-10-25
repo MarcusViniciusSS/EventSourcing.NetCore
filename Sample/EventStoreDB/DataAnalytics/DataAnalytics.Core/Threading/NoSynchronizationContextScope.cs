@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace ECommerce.Core.Threading
+namespace DataAnalytics.Core.Threading
 {
     public static class NoSynchronizationContextScope
     {

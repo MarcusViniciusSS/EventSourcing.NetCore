@@ -1,24 +1,37 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Text.Json;
-using ECommerce.Core.Events;
+using DataAnalytics.Core.Events;
 using EventStore.Client;
 
 namespace DataAnalytics.Core.Serialisation
 {
     public static class EventStoreDBSerializer
     {
-        public static T Deserialize<T>(this ResolvedEvent resolvedEvent) =>
-            (T)Deserialize(resolvedEvent);
+        public static T DeserializeData<T>(this ResolvedEvent resolvedEvent) =>
+            (T)DeserializeData(resolvedEvent);
 
-        public static object Deserialize(this ResolvedEvent resolvedEvent)
+        public static object DeserializeData(this ResolvedEvent resolvedEvent) =>
+            DeserializeData(resolvedEvent, EventTypeMapper.ToType(resolvedEvent.Event.EventType));
+
+        public static object DeserializeData(this ResolvedEvent resolvedEvent, Type eventType)
         {
-            // get type
-            var eventType = EventTypeMapper.ToType(resolvedEvent.Event.EventType);
-
             // deserialize event
             return JsonSerializer.Deserialize(
                 resolvedEvent.Event.Data.Span,
                 eventType
+            )!;
+        }
+
+        public static T DeserializeMetadata<T>(this ResolvedEvent resolvedEvent) =>
+            (T)DeserializeMetadata(resolvedEvent, typeof(T));
+
+        public static object DeserializeMetadata(this ResolvedEvent resolvedEvent, Type metadataType)
+        {
+            // deserialize event
+            return JsonSerializer.Deserialize(
+                resolvedEvent.Event.Metadata.Span,
+                metadataType
             )!;
         }
 

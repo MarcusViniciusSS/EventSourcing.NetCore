@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using ECommerce.Core.Events;
-using ECommerce.Core.Subscriptions;
-using ECommerce.Core.Threading;
+using DataAnalytics.Core.BackgroundWorkers;
+using DataAnalytics.Core.Events;
+using DataAnalytics.Core.Threading;
 using EventStore.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace DataAnalytics.Core.Subscriptions
@@ -26,9 +26,9 @@ namespace DataAnalytics.Core.Subscriptions
     public class EventStoreDBSubscriptionToAll
     {
         private readonly EventStoreClient eventStoreClient;
+        private readonly IEventBus eventBus;
         private readonly ISubscriptionCheckpointRepository checkpointRepository;
         private readonly ILogger<EventStoreDBSubscriptionToAll> logger;
-        private readonly IReadOnlyList<Func<ResolvedEvent, CancellationToken, Task>> eventHandlers;
         private EventStoreDBSubscriptionToAllOptions subscriptionOptions = default!;
         private string SubscriptionId => subscriptionOptions.SubscriptionId;
         private readonly object resubscribeLock = new();
@@ -36,16 +36,16 @@ namespace DataAnalytics.Core.Subscriptions
 
         public EventStoreDBSubscriptionToAll(
             EventStoreClient eventStoreClient,
+            IEventBus eventBus,
             ISubscriptionCheckpointRepository checkpointRepository,
-            ILogger<EventStoreDBSubscriptionToAll> logger,
-            IReadOnlyList<Func<ResolvedEvent, CancellationToken, Task>> eventHandlers
+            ILogger<EventStoreDBSubscriptionToAll> logger
         )
         {
             this.eventStoreClient = eventStoreClient ?? throw new ArgumentNullException(nameof(eventStoreClient));
+            this.eventBus = eventBus  ?? throw new ArgumentNullException(nameof(eventBus));
             this.checkpointRepository =
                 checkpointRepository ?? throw new ArgumentNullException(nameof(checkpointRepository));
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            this.eventHandlers = eventHandlers ?? throw new ArgumentNullException(nameof(eventHandlers));
         }
 
         public async Task SubscribeToAll(EventStoreDBSubscriptionToAllOptions subscriptionOptions, CancellationToken ct)
@@ -94,12 +94,7 @@ namespace DataAnalytics.Core.Subscriptions
                 if (IsEventWithEmptyData(resolvedEvent) || IsCheckpointEvent(resolvedEvent)) return;
 
                 // publish event to internal event bus
-
-                foreach (var handle in eventHandlers)
-                {
-                    await handle(resolvedEvent, ct);
-                }
-
+                await eventBus.Publish(resolvedEvent, ct);
 
                 await checkpointRepository.Store(SubscriptionId, resolvedEvent.Event.Position.CommitPosition, ct);
             }
@@ -170,6 +165,39 @@ namespace DataAnalytics.Core.Subscriptions
 
             logger.LogInformation("Checkpoint event - ignoring");
             return true;
+        }
+    }
+
+    public static class EventStoreDBSubscriptionToAllExtensions
+    {
+        public static IServiceCollection AddSubscriptionToAll(this IServiceCollection services,
+            EventStoreDBSubscriptionToAllOptions? subscriptionOptions = null,
+            bool checkpointToEventStoreDB = true)
+        {
+            if (checkpointToEventStoreDB)
+            {
+                services
+                    .AddTransient<ISubscriptionCheckpointRepository, EventStoreDBSubscriptionCheckpointRepository>();
+            }
+
+            return services.AddHostedService(serviceProvider =>
+                {
+                    var logger =
+                        serviceProvider.GetRequiredService<ILogger<BackgroundWorker>>();
+
+                    var eventStoreDBSubscriptionToAll =
+                        serviceProvider.GetRequiredService<EventStoreDBSubscriptionToAll>();
+
+                    return new BackgroundWorker(
+                        logger,
+                        ct =>
+                            eventStoreDBSubscriptionToAll.SubscribeToAll(
+                                subscriptionOptions ?? new EventStoreDBSubscriptionToAllOptions(),
+                                ct
+                            )
+                    );
+                }
+            );
         }
     }
 }

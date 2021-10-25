@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace ECommerce.Core.Subscriptions
+namespace DataAnalytics.Core.Subscriptions
 {
     public interface ISubscriptionCheckpointRepository
     {
