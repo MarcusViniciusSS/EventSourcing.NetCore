@@ -15,26 +15,19 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
 
     public static class CartProductItemsMatching
     {
-        public record ShoppingCart(
-            IDictionary<Guid, int> ProductItems
-        )
-        {
-            public static ShoppingCart Default() => new (new Dictionary<Guid, int>());
-        }
-
         public static async Task<IReadOnlyList<CartProductItemsMatched>> Handle(
-            Func<Func<ShoppingCart?, object, ShoppingCart>, string, CancellationToken, Task<ShoppingCart?>> aggregate,
+            Func<Func<Dictionary<Guid, int>?, object, Dictionary<Guid, int>>, string, CancellationToken, Task<Dictionary<Guid, int>?>> aggregateStream,
             ShoppingCartConfirmed @event,
             CancellationToken ct
         )
         {
-            var shoppingCard = await aggregate(
+            var productItems = await aggregateStream(
                 When,
-                MarketBasketAnalytics.Carts.ShoppingCart.ToStreamId(@event.ShoppingCartId),
+                ShoppingCart.ToStreamId(@event.ShoppingCartId),
                 ct
-            ) ?? ShoppingCart.Default();
+            );
 
-            var productIds = shoppingCard.ProductItems.Keys;
+            var productIds = productItems!.Keys;
 
             return productIds
                 .Select(productId =>
@@ -46,33 +39,28 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
                 .ToList();
         }
 
-        public static ShoppingCart When(ShoppingCart? entity, object @event) =>
+        public static Dictionary<Guid, int> When(Dictionary<Guid, int>? productItems, object @event) =>
             @event switch
             {
                 ShoppingCartInitialized =>
-                    new ShoppingCart(new Dictionary<Guid, int>()),
+                    new Dictionary<Guid, int>(),
 
                 ProductItemAddedToShoppingCart (_, var productItem) =>
-                    entity! with
-                    {
-                        ProductItems = Add(
-                            entity.ProductItems,
-                            productItem
-                        )
-                    },
+                    Add(
+                        productItems!,
+                        productItem
+                    ),
 
                 ProductItemRemovedFromShoppingCart (_, var productItem) =>
-                    entity! with
-                    {
-                        ProductItems = Subtract(
-                            entity.ProductItems,
-                            productItem
-                        )
-                    },
-                _ => entity!
+                    Subtract(
+                        productItems!,
+                        productItem
+                    ),
+
+                _ => productItems!
             };
 
-        private static IDictionary<Guid, int> Add(IDictionary<Guid, int> productItems, PricedProductItem productItem)
+        private static Dictionary<Guid, int> Add(Dictionary<Guid, int> productItems, PricedProductItem productItem)
         {
             var productId = productItem.ProductId;
             var quantity = productItem.Quantity;
@@ -89,7 +77,7 @@ namespace MarketBasketAnalytics.MarketBasketAnalysis
             return result;
         }
 
-        private static IDictionary<Guid, int> Subtract(IDictionary<Guid, int> productItems, PricedProductItem productItem)
+        private static Dictionary<Guid, int> Subtract(Dictionary<Guid, int> productItems, PricedProductItem productItem)
         {
             var productId = productItem.ProductId;
             var quantity = productItem.Quantity;
