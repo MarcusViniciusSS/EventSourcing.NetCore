@@ -20,11 +20,11 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
     {
         public static Task<CartAbandonmentRateCalculated> Handle(
             Func<Func<CartAbandonmentRateCalculated?, object, CartAbandonmentRateCalculated>, string, CancellationToken,
-                Task<CartAbandonmentRateCalculated?>> aggregate,
+                Task<CartAbandonmentRateCalculated?>> aggregateStream,
             ShoppingCartAbandoned @event,
             CancellationToken ct
         ) =>
-            aggregate(When, ShoppingCart.ToStreamId(@event.ShoppingCartId), ct)!;
+            aggregateStream(When, ShoppingCart.ToStreamId(@event.ShoppingCartId), ct)!;
 
         public static CartAbandonmentRateCalculated When(CartAbandonmentRateCalculated? lastEvent, object @event) =>
             @event switch

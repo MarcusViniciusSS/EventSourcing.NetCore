@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using DataAnalytics.Core.ElasticSearch;
 using DataAnalytics.Core.Entities;
 using DataAnalytics.Core.Events;
 using EventStore.Client;
 using MarketBasketAnalytics.Carts;
 using Microsoft.Extensions.DependencyInjection;
+using Nest;
 
 namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
 {
@@ -29,41 +31,33 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
                         ct
                     );
                 })
-                .AddEventHandler<CartAbandonmentRateCalculated>(async (sp, shoppingCartAbandoned, ct) =>
-                {
-                    var eventStore = sp.GetRequiredService<EventStoreClient>();
-
-                    var streamId = CartAbandonmentRatesSummary.StreamId;
-
-                    var @event = await CartAbandonmentRatesSummary.Handle(
-                        token => eventStore.ReadLastEvent<CartAbandonmentRatesSummary>(streamId, token),
-                        shoppingCartAbandoned,
-                        ct
-                    );
-
-                    await eventStore.AppendToStreamWithSingleEvent(
-                        streamId,
-                        @event,
-                        ct
-                    );
-                })
                 .AddEventHandler<ShoppingCartConfirmed>(async (sp, shoppingCartConfirmed, ct) =>
                 {
-                    var eventStore = sp.GetRequiredService<EventStoreClient>();
+                    var elastic = sp.GetRequiredService<IElasticClient>();
 
-                    var streamId = CartAbandonmentRatesSummary.StreamId;
+                    var summaryId = CartAbandonmentRatesSummary.SummaryId;
 
-                    var @event = await CartAbandonmentRatesSummary.Handle(
-                        token => eventStore.ReadLastEvent<CartAbandonmentRatesSummary>(streamId, token),
+                    var summary = await CartAbandonmentRatesSummary.Handle(
+                        token => elastic.Find<CartAbandonmentRatesSummary>(summaryId, token),
                         shoppingCartConfirmed,
                         ct
                     );
 
-                    await eventStore.AppendToStreamWithSingleEvent(
-                        streamId,
-                        @event,
+                    await elastic.Upsert(summaryId, summary, ct);
+                })
+                .AddEventHandler<CartAbandonmentRateCalculated>(async (sp, shoppingCartAbandoned, ct) =>
+                {
+                    var elastic = sp.GetRequiredService<IElasticClient>();
+
+                    var summaryId = CartAbandonmentRatesSummary.SummaryId;
+
+                    var summary = await CartAbandonmentRatesSummary.Handle(
+                        token => elastic.Find<CartAbandonmentRatesSummary>(summaryId, token),
+                        shoppingCartAbandoned,
                         ct
                     );
+
+                    await elastic.Upsert(summaryId, summary, ct);
                 });
 
     }

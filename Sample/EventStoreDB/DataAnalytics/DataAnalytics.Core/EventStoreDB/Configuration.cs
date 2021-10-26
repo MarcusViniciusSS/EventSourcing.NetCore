@@ -3,7 +3,7 @@ using EventStore.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace DataAnalytics.Core
+namespace DataAnalytics.Core.EventStoreDB
 {
     public class EventStoreDBConfig
     {

@@ -1,4 +1,6 @@
-﻿using DataAnalytics.Core.Events;
+﻿using DataAnalytics.Core.ElasticSearch;
+using DataAnalytics.Core.Events;
+using DataAnalytics.Core.EventStoreDB;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +14,7 @@ namespace DataAnalytics.Core
         ) =>
             services
                 .AddEventBus()
-                .AddEventStoreDB(configuration);
+                .AddEventStoreDB(configuration)
+                .AddElasticsearch(configuration);
     }
 }

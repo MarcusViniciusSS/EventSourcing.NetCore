@@ -91,6 +91,6 @@ namespace MarketBasketAnalytics.CartAbandonmentRateAnalysis
             };
         }
 
-        public const string StreamId = "cart_abandonment_rates-summary";
+        public const string SummaryId = "cart_abandonment_rates_summary";
     }
 }
