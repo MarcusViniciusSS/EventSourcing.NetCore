@@ -232,6 +232,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventPipelines.MediatR", "Sample\EventPipelines\EventPipelines.MediatR\EventPipelines.MediatR.csproj", "{504EF1B3-0E8E-42D8-8E30-2348539E3639}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EventsVersioning", "EventsVersioning", "{0C3B70E2-26A6-4707-A537-74D649EDC2B8}"
+	ProjectSection(SolutionItems) = preProject
+		Sample\EventsVersioning\README.md = Sample\EventsVersioning\README.md
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECommerce.V1", "Sample\EventsVersioning\ECommerce.V1\ECommerce.V1.csproj", "{7B7E8DF0-8D21-4BC0-8A61-966A34E77DD8}"
 EndProject
